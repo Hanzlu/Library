@@ -18,6 +18,6 @@ from django.urls import include, path
 
 urlpatterns = [
     path('library/', include('library.urls')),
-    path('admin/', admin.site.urls),
+    path('admin/', admin.site.urls), #replace this with line below
     #path('Th-Admi-Pag-IS-Onl-Availabl-AT-Tuesda-17-35/', admin.site.urls), #F3
 ]
