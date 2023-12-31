@@ -17,7 +17,7 @@ def index(request):
     allBooks = Book.objects.all()
     #t = time.time() //1  #F2
     #for book in allBooks:
-        #if book.borrowed = 1:
+        #if book.borrowed = 1:  #F4
             #log_borrowed += 1
     #    if book.returnTime != 0 and book.returnTime < t:
     #        book.borrowed = 0
