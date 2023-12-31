@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="">
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+  </head>
+  <body>
+
+    <h1>LIBRARY</h1>
+    <p>Login:</p> <p color="red">{{ msg }}</p>
+    <input type="text" id="username" value="Username"></input><br>
+    <input type="text" id="password" value="Password"></input><br>
+    <button onclick="login()">login</button>
+
+    <script>
+
+      function login() {
+        var username = document.getElementById("username").value;
+        var password = document.getElementById("password").value;
+        window.location.href = "library/" + username + "/" + password;
+      }
+
+    </script>
+
+
+    <header></header>
+    <main></main>
+    <footer></footer>
+  </body>
+</html>
