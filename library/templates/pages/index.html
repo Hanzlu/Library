@@ -9,16 +9,30 @@
     <h1>LIBRARY</h1>
 
     <h2>All Books</h2>
-		{% for book in books %}
-		{{book.title}}<br>
-		{% endfor %}
+      {% for book in books %}
+      {{book.title}}<br>
+      {% endfor %}
 
     <h2>Available Books</h2>
-        <ul>
-		{% for book in available %}
-			<li><a href="readbook/{{book.title}}">Borrow {{book.title}}</a></li>
-		{% endfor %}
-        </ul>
+      <!-- FLAW 1: REPLACE THIS <ul> SECTION WITH THE COMMENTED <ul> section BELOW -->
+      <ul>
+        {% for book in available %}
+          <li><a href="readbook/{{book.title}}">Borrow {{book.title}}</a></li>
+        {% endfor %}
+      </ul>
+
+      <!-- FIX 1: CSRF -->
+      <!-- make the links into buttons instead, to allow POST request (and CSRF) instead of GET -->
+      <!--
+      <ul>
+        {% for book in available %}
+          <form action="/library/readbook/{{book.title}}" method="post">
+            {% csrf_token %}
+            <button type="submit">Borrow {{book.title}}</button>
+          </form>
+        {% endfor %}
+      </ul>
+      -->
 
   </body>
 </html>

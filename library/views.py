@@ -3,60 +3,81 @@ from django.template import loader
 from django.http import HttpResponse
 from .models import Book, Log
 import json
-#Needed for fixing flaws later:
-import random, time
-csrf_tokens = []
+#needed for fixing flaws, but kept here for simplicity:
+import time #FLAW 3: returnTime
+from django.views.decorators.csrf import csrf_protect #FLAW 1: CSRF
+
 # Create your views here.
 
 def index(request):
-#   log_time = time.time()//1  #F4
-#   log_requests = str(request)
-#   log_borrowed = 0
-#   log_tokens = len(csrf_tokens)
-    #csrf_tokens.append(request.COOKIES['csrftoken']) #F5
-    allBooks = Book.objects.all()
-    #t = time.time() //1  #F2
+    allBooks = Book.objects.all() #get all books from the database
+    #currentTime = time.time()//1  #FLAWS 3&4: returnTime and timestamp
+    #FLAW 3: if a book has been borrowed for too long: return it automatically
+    #FLAW 3, uncomment the next six lines
     #for book in allBooks:
-        #if book.borrowed = 1:  #F4
-            #log_borrowed += 1
-    #    if book.returnTime != 0 and book.returnTime < t:
-    #        book.borrowed = 0
-    #        book.returnTime = 0
-    #        book.save()
-    availableBooks = Book.objects.filter(borrowed = 0)
-    #Log.objects.create(timestamp = log_time, request = log_requests, borrowed = log_borrowed, tokens = log_tokens) #F4
+    #    if book.borrowed == 1 and book.returnTime < currentTime:
+    #        book.borrowed = 0 #return the book
+    #        book.returnID = "" #remove the returnID
+    #        book.returnTime = 0 #remove the returnTime
+    #        book.save() #store the information
+    availableBooks = Book.objects.filter(borrowed = 0) #get all books that are not yet borrowed
+    #FLAW 4: uncomment the next four lines for logging
+    #log_time = currentTime #timestamp for the log
+    #log_request = str(request) #the request in text format
+    #log_available = len(availableBooks) #number of available books in the system
+    #Log.objects.create(timestamp = log_time, request = log_request, available = log_available, status = "OK") #save the log
     return render(request, "pages/index.html", context = {'books' : allBooks, 'available' : availableBooks})
 
+#@csrf_protect #FLAW 1: CSRF
 def readbook(request, title):
-#   log_time = time.time()//1  #F4
-#   log_requests = str(request)
-#   log_borrowed = -1
-#   log_tokens = len(csrf_tokens)
-    #token = request.COOKIES['csrftoken']  #F5
-    #if token in csrf_tokens:
-    #    csrf_tokens.remove(token)
-    #else:
-    #    return render(request, "pages/error.html", context = {'msg' : "You tried to incorrectly access a book."})
-    book = Book.objects.get(title = title)
-    #if book.borrowed == 1:  #F1.1
-    #    return render(request, "pages/error.html", context = {'msg' : "You tried to access an already borrowed book."})
-    #book.returnID = str(random.random()) #F1.2
-    book.borrowed = 1
-    #book.returnTime = time.time()//1 + 20 #20 secs until returnTime #F2
-    book.save()
-    #Log.objects.create(timestamp = log_time, request = log_requests, borrowed = log_borrowed, tokens = log_tokens) #F4
+    #currentTime = time.time()//1 #FLAWS 3&4, current time and timestamp
+    #FLAW 4, uncomment the next four lines for logging
+    #log_time = currentTime #timestamp for log
+    #log_request = str(request) #request in text format
+    #availableBooks = Book.objects.filter(borrowed = 0) #get all books that are not yet borrowed
+    #log_available = len(availableBooks) #number of available books
+    #if request.method != "POST": #FLAW 1, method should be POST for CSRF; uncomment this line, but not the next
+        #Log.objects.create(timestamp = log_time, request = log_request, available = log_available, status = "NOT_POST_METHOD") #FLAW 4: log
+    #    return render(request, "pages/error.html", context = {'msg' : "You tried to incorrectly access a book."}) #FLAW 1
+    #else the method = POST:
+    try:
+        book = Book.objects.get(title = title) #get the book with the requested title
+    except: #if it does not exist in the database, return error
+        #Log.objects.create(timestamp = log_time, request = log_request, available = log_available, status = "BOOK_DOES_NOT_EXIST") #FLAW 4: log
+        return render(request, "pages/error.html", context = {'msg' : "You tried to access a non-existing book."})
+    #FLAW 2: prevent borrowing of an already borrowed book
+    #if book.borrowed == 1: #FLAW 2, uncomment this line, but not the next, yet
+        #Log.objects.create(timestamp = log_time, request = log_request, available = log_available, status = "ALREADY_BORROWED") #FLAW 4: log
+    #    return render(request, "pages/error.html", context = {'msg' : "You tried to access an already borrowed book."}) #FLAW 2
+    #book.returnID = request.COOKIES['csrftoken'] #FLAW 2: prevent returning of someone else's book
+    #book.returnTime = currentTime + 20 #FLAW 3: returnTime is set to 20 secs after borrowing, to allow automatic return
+    book.borrowed = 1 #register book as borrowed
+    book.save() #store information about book
+    #Log.objects.create(timestamp = log_time, request = log_request, available = log_available, status = "OK") #FLAW 4: log
     return render(request, "pages/readbook.html", context = {'book' : book})
 
-def returnBook(request, title):
-#def returnBook(request, title, returnID): #F1.2 replace above line with this
-#   log_time = time.time()//1  #F4
-#   log_requests = str(request)
-#   log_borrowed = -2
-#   log_tokens = len(csrf_tokens)
-    book = Book.objects.get(title = title)
-    #if book.returnID != returnID:  #F1.2
-    #    return render(request, "pages/error.html", context = {'msg' : "You tried to return a borrowed book incorrectly."})
-    book.borrowed = 0
-    book.save()
-    #Log.objects.create(timestamp = log_time, request = log_requests, borrowed = log_borrowed, tokens = log_tokens) #F4
+#@csrf_protect #FLAW 1: CSRF
+def returnBook(request, title): #FLAW 2, replace this line with the next
+#def returnBook(request, title, returnID): #FLAW 2, replace above line with this
+    #FLAW 4, uncomment the next four lines for logging
+    #log_time = time.time()//1 #timestamp
+    #log_request = str(request) #request in text format
+    #availableBooks = Book.objects.filter(borrowed = 0) #get all books that are not yet borrowed
+    #log_available = len(availableBooks) #number of available books
+    #if request.method != "POST": #FLAW 1, method should be POST for CSRF; uncomment this line, but not the next, yet
+        #Log.objects.create(timestamp = log_time, request = log_request, available = log_available, status = "NOT_POST_METHOD") #FLAW 4: log
+    #    return render(request, "pages/error.html", context = {'msg' : "You tried to incorrectly access a book."}) #FLAW 1
+    #else the method = POST:
+    try:
+        book = Book.objects.get(title = title) #get the book with the requested title
+    except: #if it does not exist in the database, return error
+        #Log.objects.create(timestamp = log_time, request = log_request, available = log_available, status = "BOOK_DOES_NOT_EXIST") #FLAW 4: log
+        return render(request, "pages/error.html", context = {'msg' : "You tried to access a non-existing book."})
+    #FLAW 2: prevent returning of someone else's book
+    #if book.returnID != returnID:  #FLAW 2, uncomment this line but not the next, yet
+        #Log.objects.create(timestamp = log_time, request = log_request, available = log_available, status = "WRONG_RETURN_ID") #FLAW 4: log
+    #    return render(request, "pages/error.html", context = {'msg' : "You tried to return a book incorrectly."}) #FLAW 2
+    book.borrowed = 0 #register book as returned
+    book.save() #store book information
+    #Log.objects.create(timestamp = log_time, request = log_request, available = log_available, status = "OK") #FLAW 4
     return redirect("/library")

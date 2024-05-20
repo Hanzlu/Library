@@ -10,8 +10,19 @@
 
     <p>{{book.text}}</p>
 
+    <!-- FLAW 1: REPLACE THIS <a> WITH THE <form> SECTION BELOW -->
     <a href="/library/return/{{book.title}}">Return Book</a>
-<!--<a href="/library/return/{{book.title}}/{{book.returnID}}">Return Book</a> --> <!-- F1.2 -->
+
+    <!-- FLAW 1 -->
+    <!-- make the link into a button instead, to allow POST request (and CSRF) instead of GET -->
+    <!--
+    <form action="/library/return/{{book.title}}" method="post">
+FLAW 2: REPLACE THE LINE ABOVE WITH THE NEXT LINE (comment this and the next line if you test FLAW 1 before 2):
+<form action="/library/return/{{book.title}}/{{book.returnID}}" method = "post">
+        {% csrf_token %}
+        <button type="submit">Return {{book.title}}</button>
+    </form>
+    -->
 
   </body>
 </html>

@@ -4,4 +4,4 @@ from .models import Book, Log
 # Register your models here.
 
 admin.site.register(Book)
-admin.site.register(Log)
+admin.site.register(Log) #FLAW 4: log
